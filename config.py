@@ -16,7 +16,7 @@ DB_URI = os.environ.get("DB_URI", "mongodb+srv://knight_rider:GODGURU12345@knigh
 DB_NAME = os.environ.get("DB_NAME", "SaveRestricted2")
 
 # Log Channel to Track New Users 
-LOG_CHANNEL = -1002741915396  # replace with your log channel id
+LOG_CHANNEL = -1002637845907 # replace with your log channel id
 
 # If You Want Error Message In Your Personal Message Then Turn It True Else If You Don't Want Then False
 ERROR_MESSAGE = bool(os.environ.get('ERROR_MESSAGE', True))
