@@ -1,13 +1,12 @@
-
-
 import pyromod
 import pyromod.listen
+from pyromod.listen.listen import ListenerTypes  # ✅ Add this import
 import asyncio
 import logging
 import datetime
 from datetime import timezone, timedelta
 import aiohttp
-from motor.motor_asyncio import AsyncIOMotorClient  # ✅ MongoDB
+from motor.motor_asyncio import AsyncIOMotorClient
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from config import API_ID, API_HASH, BOT_TOKEN, LOG_CHANNEL, KEEP_ALIVE_URL, DB_URI, DB_NAME
@@ -45,6 +44,11 @@ class Bot(Client):
             workers=50,
             sleep_threshold=10
         )
+        
+        # ✅ Initialize pyromod listeners dictionary manually
+        if not hasattr(self, 'listeners'):
+            self.listeners = {listener_type: [] for listener_type in ListenerTypes}
+        
         self.keep_alive_task = None
         logging.info("Bot initializing with plugins from 'Rexbots'...")
 
