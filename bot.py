@@ -1,3 +1,7 @@
+# Rexbots
+# Don't Remove Credit
+# Telegram Channel @RexBots_Official
+
 import asyncio
 import datetime
 import sys
@@ -78,6 +82,9 @@ class Bot(Client):
             f"**🔥 Pyrogram:** `{pyrogram_version}`\n"
             f"**__@RexBots_Official__**"
         )
+# Rexbots
+# Don't Remove Credit
+# Telegram Channel @RexBots_Official
 
         try:
             await self.send_message(LOG_CHANNEL, text)
@@ -152,4 +159,8 @@ BotInstance.run()
 
 # Rexbots
 # Don't Remove Credit 🥺
+# Telegram Channel @RexBots_Official
+
+# Rexbots
+# Don't Remove Credit
 # Telegram Channel @RexBots_Official

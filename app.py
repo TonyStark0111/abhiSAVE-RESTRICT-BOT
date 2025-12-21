@@ -1,3 +1,7 @@
+# Rexbots
+# Don't Remove Credit
+# Telegram Channel @RexBots_Official
+
 
 
 from flask import Flask
@@ -49,6 +53,9 @@ def hello_world():
       width: 100%;
       cursor: pointer;
     }
+# Rexbots
+# Don't Remove Credit
+# Telegram Channel @RexBots_Official
 
     h1 {
       font-size: clamp(2.5rem, 8vw, 7rem);
@@ -96,4 +103,8 @@ if __name__ == "__main__":
 
 # Rexbots
 # Don't Remove Credit 
+# Telegram Channel @RexBots_Official
+
+# Rexbots
+# Don't Remove Credit
 # Telegram Channel @RexBots_Official

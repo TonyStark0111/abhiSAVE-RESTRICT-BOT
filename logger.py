@@ -1,3 +1,7 @@
+# Rexbots
+# Don't Remove Credit
+# Telegram Channel @RexBots_Official
+
 import logging
 from logging.handlers import RotatingFileHandler
 import os
@@ -5,6 +9,9 @@ import os
 # Create a logger
 SHORT_LOG_FORMAT = "[%(asctime)s - %(levelname)s] - %(name)s - %(message)s"
 FULL_LOG_FORMAT = "%(asctime)s - [%(levelname)s] - %(name)s - %(message)s (%(filename)s:%(lineno)d)"
+# Rexbots
+# Don't Remove Credit
+# Telegram Channel @RexBots_Official
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,3 +26,7 @@ logging.getLogger("pyrogram").setLevel(logging.WARNING)
 
 def LOGGER(name: str) -> logging.Logger:
     return logging.getLogger(name)
+
+# Rexbots
+# Don't Remove Credit
+# Telegram Channel @RexBots_Official
