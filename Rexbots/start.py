@@ -10,8 +10,35 @@ from pyrogram.errors import FloodWait, UserIsBlocked, InputUserDeactivated, User
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from config import API_ID, API_HASH, ERROR_MESSAGE
 from database.db import db
+import math
 from Rexbots.strings import HELP_TXT, COMMANDS_TXT
 from logger import LOGGER
+
+def humanbytes(size):
+    if not size:
+        return ""
+    power = 2**10
+    n = 0
+    Dic_powerN = {0: ' ', 1: 'K', 2: 'M', 3: 'G', 4: 'T'}
+    while size > power:
+        size /= power
+        n += 1
+    return str(round(size, 2)) + " " + Dic_powerN[n] + 'B'
+
+def TimeFormatter(milliseconds: int) -> str:
+    seconds, milliseconds = divmod(int(milliseconds), 1000)
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    tmp = ((str(days) + "d, ") if days else "") + \
+        ((str(hours) + "h, ") if hours else "") + \
+        ((str(minutes) + "m, ") if minutes else "") + \
+        ((str(seconds) + "s, ") if seconds else "")
+    
+    if not tmp:
+        tmp = ((str(milliseconds) + "ms, ") if milliseconds else "")
+        
+    return tmp[:-2] if tmp else "0s"
 
 logger = LOGGER(__name__)
 
@@ -28,6 +55,18 @@ REACTIONS = [
     "🤓", "😎", "🏆", "🔥", "🤭", "🌚", "🆒", "👻", "😁"
 ]
 
+PROGRESS_BAR_DASHBOARD  = """\
+<blockquote>
+✦ <code>{bar}</code> • <b>{percentage:.1f}%</b><br>
+››  <b>Speed</b> • <code>{speed}/s</code><br>
+››  <b>Size</b> • <code>{current} / {total}</code><br>
+››  <b>ETA</b> • <code>{eta}</code><br>
+››  <b>Elapsed</b> • <code>{elapsed}</code>
+</blockquote>
+"""
+
+
+
 # -------------------
 # Download status
 # -------------------
@@ -37,9 +76,9 @@ async def downstatus(client, statusfile, message, chat):
         await asyncio.sleep(3)
     while os.path.exists(statusfile):
         try:
-            with open(statusfile, "r") as downread:
+            with open(statusfile, "r", encoding='utf-8') as downread:
                 txt = downread.read()
-            await client.edit_message_text(chat, message.id, f"Downloaded: {txt}")
+            await client.edit_message_text(chat, message.id, f"📥 **Downloading...**\n\n{txt}")
             await asyncio.sleep(10)
         except:
             await asyncio.sleep(5)
@@ -53,9 +92,9 @@ async def upstatus(client, statusfile, message, chat):
         await asyncio.sleep(3)
     while os.path.exists(statusfile):
         try:
-            with open(statusfile, "r") as upread:
+            with open(statusfile, "r", encoding='utf-8') as upread:
                 txt = upread.read()
-            await client.edit_message_text(chat, message.id, f"Uploaded: {txt}")
+            await client.edit_message_text(chat, message.id, f"📤 **Uploading...**\n\n{txt}")
             await asyncio.sleep(10)
         except:
             await asyncio.sleep(5)
@@ -70,14 +109,47 @@ def progress(current, total, message, type):
         progress.cache = {}
     
     now = time.time()
-    last_time = progress.cache.get(f"{message.id}{type}", 0)
+    task_id = f"{message.id}{type}"
+    last_time = progress.cache.get(task_id, 0)
     
-    # Update only every 2 seconds or if completed
-    if (now - last_time) > 2 or current == total:
+    # Track start time for speed calc
+    if not hasattr(progress, "start_time"):
+        progress.start_time = {}
+    if task_id not in progress.start_time:
+        progress.start_time[task_id] = now
+        
+    # Update only every 3 seconds or if completed
+    if (now - last_time) > 3 or current == total:
         try:
-            with open(f'{message.id}{type}status.txt', "w") as fileup:
-                fileup.write(f"{current * 100 / total:.1f}%")
-            progress.cache[f"{message.id}{type}"] = now
+            percentage = current * 100 / total
+            speed = current / (now - progress.start_time[task_id])
+            eta = (total - current) / speed if speed > 0 else 0
+            elapsed = now - progress.start_time[task_id]
+            
+            # Progress Bar
+            filled_length = int(percentage / 10) # 10 blocks for 100%
+            bar = '▰' * filled_length + '▱' * (10 - filled_length)
+            
+            status = PROGRESS_BAR_DASHBOARD.format(
+                bar=bar,
+                percentage=percentage,
+                current=humanbytes(current),
+                total=humanbytes(total),
+                speed=humanbytes(speed),
+                eta=TimeFormatter(eta * 1000),
+                elapsed=TimeFormatter(elapsed * 1000)
+            )
+            
+            with open(f'{message.id}{type}status.txt', "w", encoding='utf-8') as fileup:
+                fileup.write(status)
+                
+            progress.cache[task_id] = now
+            
+            if current == total:
+                # Cleanup cache
+                progress.start_time.pop(task_id, None)
+                progress.cache.pop(task_id, None)
+                
         except:
             pass
 
@@ -271,7 +343,10 @@ async def handle_private(client: Client, acc, message: Message, chatid: int, msg
             return
 
     smsg = await client.send_message(message.chat.id, '**__Downloading 🚀__**', reply_to_message_id=message.id)
-    asyncio.create_task(downstatus(client, f'{message.id}downstatus.txt', smsg, chat))
+    try:
+        asyncio.create_task(downstatus(client, f'{message.id}downstatus.txt', smsg, chat))
+    except Exception as e:
+        logger.error(f"Error creating download status task: {e}")
     try:
         file = await acc.download_media(msg, progress=progress, progress_args=[message, "down"])
         if os.path.exists(f'{message.id}downstatus.txt'):
@@ -286,7 +361,10 @@ async def handle_private(client: Client, acc, message: Message, chatid: int, msg
     if batch_temp.IS_BATCH.get(message.from_user.id):
         return
 
-    asyncio.create_task(upstatus(client, f'{message.id}upstatus.txt', smsg, chat))
+    try:
+        asyncio.create_task(upstatus(client, f'{message.id}upstatus.txt', smsg, chat))
+    except Exception as e:
+        logger.error(f"Error creating upload status task: {e}")
     caption = msg.caption if msg.caption else None
     if batch_temp.IS_BATCH.get(message.from_user.id):
         return
