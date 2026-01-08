@@ -12,7 +12,7 @@ API_HASH = os.environ.get("API_HASH", "f150646c78f09b4f88bef191a22539c0")
 ADMINS = [int(id) for id in os.environ.get("ADMINS", "7640198485").split(",")]
 LOG_CHANNEL = "-1003508871162"
 ERROR_MESSAGE = bool(os.environ.get('ERROR_MESSAGE', True))
-KEEP_ALIVE_URL = os.environ.get("KEEP_ALIVE_URL", "https://radhey-save-restrict-bot.onrender.com")
+KEEP_ALIVE_URL = os.environ.get("https://radhey-save-restrict-bot.onrender.com")
 # Rexbots
 # Don't Remove Credit
 # Telegram Channel @RexBots_Official

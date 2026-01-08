@@ -20,14 +20,16 @@ IST = timezone(timedelta(hours=5, minutes=30))
 
 async def keep_alive():
     """Send a request every 100 seconds to keep the bot alive."""
+    logger.info(f"KEEP_ALIVE_URL set to: {KEEP_ALIVE_URL}")
     async with aiohttp.ClientSession() as session:
         while True:
             if KEEP_ALIVE_URL:
                 try:
+                    logger.info("Sending keep-alive request to keep the web app alive.")
                     await session.get(KEEP_ALIVE_URL)
-                    logger.info("Sent keep-alive request.")
+                    logger.info("Sent keep-alive request successfully.")
                 except Exception as e:
-                    logger.error(f"Keep-alive request failed: {e}")
+                    logger.error(f"Keep-alive request failed: {type(e).__name__}: {e}")
             await asyncio.sleep(100)
 
 
@@ -51,10 +53,13 @@ class Bot(Client):
         self.keep_alive_task = asyncio.create_task(keep_alive())
 
         # Cache Log Channel Peer
+        logger.info(f"Attempting to cache LOG_CHANNEL: {LOG_CHANNEL}")
         try:
-            await self.get_chat(LOG_CHANNEL)
+            chat = await self.get_chat(LOG_CHANNEL)
+            logger.info(f"Successfully cached LOG_CHANNEL: {chat.title} (ID: {chat.id})")
         except Exception as e:
             logger.warning(f"Failed to cache Log Channel: {e}")
+            logger.warning(f"LOG_CHANNEL value: {LOG_CHANNEL}. Ensure the bot is added to this channel as admin.")
 
         # Bot startup log
         now = datetime.datetime.now(IST)
