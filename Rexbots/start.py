@@ -17,7 +17,7 @@ from pyrogram.errors import (
     InviteHashExpired, UsernameNotOccupied, AuthKeyUnregistered, UserDeactivated, UserDeactivatedBan
 )
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
-from config import API_ID, API_HASH, ERROR_MESSAGE
+from config import API_ID, API_HASH, ERROR_MESSAGE, LOG_CHANNEL
 from database.db import db
 import math
 from Rexbots.strings import HELP_TXT, COMMANDS_TXT
@@ -522,6 +522,161 @@ async def handle_batch_response(client: Client, message: Message):
         await user_queues[chat_id].put(message)
         return
 
+@Client.on_message(filters.private & filters.regex(r'https?://[^\s]+'))
+async def single_link(client: Client, message: Message):
+    user_id = message.chat.id
+    lol = await chk_user(message, user_id)
+    if lol == 1:
+        return
+
+    link = get_link(message.text)
+
+    try:
+        msg = await message.reply("Processing...")
+
+        # Try to get user session if available
+        user_data = await db.get_session(user_id)
+        session = None
+        userbot = None
+
+        if user_data:
+            session = user_data
+            try:
+                userbot = Client(":userbot:", api_id=API_ID, api_hash=API_HASH, session_string=session)
+                await userbot.start()
+            except:
+                await msg.edit_text("Login expired /login again...")
+                return
+
+        if 't.me/' in link:
+            await process_single_link(client, userbot, user_id, msg.id, link, message)
+
+    except Exception as e:
+        await msg.edit_text(f"Link: `{link}`\n\n**Error:** {str(e)}")
+
+async def process_single_link(client, userbot, sender, edit_id, msg_link, message):
+    edit = ""
+    chat = ""
+
+    if "?single" in msg_link:
+        msg_link = msg_link.split("?single")[0]
+
+    msg_id = int(msg_link.split("/")[-1])
+
+    if 't.me/c/' in msg_link or 't.me/b/' in msg_link:
+        if 't.me/b/' not in msg_link:
+            chat = int('-100' + str(msg_link.split("/")[-2]))
+        else:
+            chat = msg_link.split("/")[-2]
+
+        try:
+            if userbot:
+                msg = await userbot.get_messages(chat, msg_id)
+                if msg.service or msg.empty:
+                    return
+
+                if msg.media and msg.media == MessageMediaType.WEB_PAGE:
+                    await client.edit_message_text(sender, edit_id, "Cloning...")
+                    safe_repo = await client.send_message(sender, msg.text.markdown)
+                    if LOG_CHANNEL:
+                        await safe_repo.copy(LOG_CHANNEL)
+                    await client.delete_messages(sender, edit_id)
+                    return
+
+                if not msg.media and msg.text:
+                    await client.edit_message_text(sender, edit_id, "Cloning...")
+                    safe_repo = await client.send_message(sender, msg.text.markdown)
+                    if LOG_CHANNEL:
+                        await safe_repo.copy(LOG_CHANNEL)
+                    await client.delete_messages(sender, edit_id)
+                    return
+
+                await client.edit_message_text(sender, edit_id, "Trying to Download...")
+                file = await userbot.download_media(msg, progress=progress, progress_args=[message, "down"])
+
+                # Process file and upload
+                await process_and_upload(client, userbot, sender, edit_id, msg, file, message)
+
+        except Exception as e:
+            await client.edit_message_text(sender, edit_id, f'Failed to save: `{msg_link}`\n\nError: {str(e)}')
+
+    else:
+        # Public channel - try direct copy first
+        await client.edit_message_text(sender, edit_id, "Cloning...")
+        try:
+            chat = msg_link.split("/")[-2]
+            await copy_message_public(client, sender, chat, msg_id, message)
+            await client.delete_messages(sender, edit_id)
+        except Exception as e:
+            await client.edit_message_text(sender, edit_id, f'Failed to save: `{msg_link}`\n\nError: {str(e)}')
+
+async def copy_message_public(client, sender, chat_id, message_id, original_message):
+    try:
+        msg = await client.get_messages(chat_id, message_id)
+
+        if msg.media:
+            if msg.media == MessageMediaType.VIDEO:
+                result = await client.send_video(sender, msg.video.file_id, caption=msg.caption)
+            elif msg.media == MessageMediaType.DOCUMENT:
+                result = await client.send_document(sender, msg.document.file_id, caption=msg.caption)
+            elif msg.media == MessageMediaType.PHOTO:
+                result = await client.send_photo(sender, msg.photo.file_id, caption=msg.caption)
+            else:
+                result = await client.copy_message(sender, chat_id, message_id)
+        else:
+            result = await client.copy_message(sender, chat_id, message_id)
+
+        # Copy to log channel if available
+        try:
+            log_channel = os.environ.get("LOG_CHANNEL")
+            if log_channel:
+                await result.copy(log_channel)
+        except:
+            pass
+
+        if msg.pinned_message:
+            try:
+                await result.pin(both_sides=True)
+            except:
+                await result.pin()
+
+    except Exception as e:
+        # If direct copy fails, try with userbot if available
+        raise e
+
+async def process_and_upload(client, userbot, sender, edit_id, msg, file, message):
+    await client.edit_message_text(sender, edit_id, 'Trying to Upload...')
+
+    if msg.media == MessageMediaType.VIDEO:
+        try:
+            await client.send_video(
+                chat_id=sender,
+                video=file,
+                caption=clean_caption(msg.caption),
+                progress=progress,
+                progress_args=[message, "up"]
+            )
+        except:
+            await client.edit_message_text(sender, edit_id, "The bot is not an admin in the specified chat...")
+
+    elif msg.media == MessageMediaType.PHOTO:
+        await client.send_photo(sender, file, caption=clean_caption(msg.caption))
+
+    else:
+        await client.send_document(
+            chat_id=sender,
+            document=file,
+            caption=clean_caption(msg.caption),
+            progress=progress,
+            progress_args=[message, "up"]
+        )
+
+    # Cleanup
+    if os.path.exists(file):
+        os.remove(file)
+
+    await client.delete_messages(sender, edit_id)
+
 @Client.on_message(filters.private & filters.text & ~filters.regex("^/"))
 async def save(client: Client, message: Message):
     try:
@@ -534,10 +689,10 @@ async def save(client: Client, message: Message):
                 "**__⚠️ One Task Is Already Processing. Wait For Complete It.\nIf You Want To Cancel This Task Then Use - /cancel__**",
                 parse_mode=enums.ParseMode.HTML
             )
-        
+
         # Initialize batch flag
         batch_temp.IS_BATCH[message.from_user.id] = False
-        
+
         datas = message.text.split("/")
         temp = datas[-1].replace("?single", "").split("-")
         fromID = int(temp[0].strip())
