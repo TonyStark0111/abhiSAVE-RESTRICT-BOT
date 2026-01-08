@@ -3,7 +3,6 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge&logo=python&logoColor=white">
   <img src="https://img.shields.io/badge/Pyrogram-v2-yellow?style=for-the-badge&logo=telegram">
-  <img src="https://img.shields.io/badge/MongoDB-Database-green?style=for-the-badge&logo=mongodb">
 </p>
 
 An advanced Telegram bot by **RexBots** designed to save restricted content (Text, Media, Files) from both private and public channels. This bot supports batch downloading, user login via session strings, and advanced customization options.
