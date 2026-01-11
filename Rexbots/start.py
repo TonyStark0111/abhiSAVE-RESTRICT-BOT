@@ -1219,14 +1219,25 @@ async def button_callbacks(client: Client, callback_query):
                 InlineKeyboardButton("⬅️ Bᴀᴄᴋ", callback_data="start_btn")
             ]
         ])
-        await client.edit_message_text(
-            chat_id=message.chat.id,
-            message_id=message.id,
-            text=HELP_TXT,
-            reply_markup=help_buttons,
-            parse_mode=enums.ParseMode.HTML,
-            disable_web_page_preview=True
-        )
+        try:
+            await client.edit_message_text(
+                chat_id=message.chat.id,
+                message_id=message.id,
+                text=HELP_TXT,
+                reply_markup=help_buttons,
+                parse_mode=enums.ParseMode.HTML,
+                disable_web_page_preview=True
+            )
+        except FloodWait as e:
+            await asyncio.sleep(e.value)
+            await client.edit_message_text(
+                chat_id=message.chat.id,
+                message_id=message.id,
+                text=HELP_TXT,
+                reply_markup=help_buttons,
+                parse_mode=enums.ParseMode.HTML,
+                disable_web_page_preview=True
+            )
         await callback_query.answer()
 
     # About button
@@ -1253,14 +1264,25 @@ async def button_callbacks(client: Client, callback_query):
             ]
         ])
 
-        await client.edit_message_text(
-            chat_id=message.chat.id,
-            message_id=message.id,
-            text=about_text,
-            reply_markup=about_buttons,
-            parse_mode=enums.ParseMode.HTML,
-            disable_web_page_preview=True
-        )
+        try:
+            await client.edit_message_text(
+                chat_id=message.chat.id,
+                message_id=message.id,
+                text=about_text,
+                reply_markup=about_buttons,
+                parse_mode=enums.ParseMode.HTML,
+                disable_web_page_preview=True
+            )
+        except FloodWait as e:
+            await asyncio.sleep(e.value)
+            await client.edit_message_text(
+                chat_id=message.chat.id,
+                message_id=message.id,
+                text=about_text,
+                reply_markup=about_buttons,
+                parse_mode=enums.ParseMode.HTML,
+                disable_web_page_preview=True
+            )
         await callback_query.answer()
 
     # Home / Start button
@@ -1278,22 +1300,41 @@ async def button_callbacks(client: Client, callback_query):
                 InlineKeyboardButton('👨‍💻 Developer', url='https://t.me/RexBots_Official')
             ]
         ])
-        await client.edit_message_text(
-            chat_id=message.chat.id,
-            message_id=message.id,
-            text=(
-                f"<blockquote><b>👋 Welcome {callback_query.from_user.mention}!</b></blockquote>\n\n"
-                "<b>I am the Advanced Save Restricted Content Bot by RexBots.</b>\n\n"
-                "<blockquote><b>🚀 What I Can Do:</b>\n"
-                "<b>‣ Save Restricted Post (Text, Media, Files)</b>\n"
-                "<b>‣ Support Private & Public Channels</b>\n"
-                "<b>‣ Batch/Bulk Mode Supported</b></blockquote>\n\n"
-                f"<blockquote><b>🔐 Status:</b> {login_status}</blockquote>\n\n"
-                "<blockquote><b>⚠️ Note:</b> <i>You must <code>/login</code> to your account to use the downloading features.</i></blockquote>"
-            ),
-            reply_markup=start_buttons,
-            parse_mode=enums.ParseMode.HTML
-        )
+        try:
+            await client.edit_message_text(
+                chat_id=message.chat.id,
+                message_id=message.id,
+                text=(
+                    f"<blockquote><b>👋 Welcome {callback_query.from_user.mention}!</b></blockquote>\n\n"
+                    "<b>I am the Advanced Save Restricted Content Bot by RexBots.</b>\n\n"
+                    "<blockquote><b>🚀 What I Can Do:</b>\n"
+                    "<b>‣ Save Restricted Post (Text, Media, Files)</b>\n"
+                    "<b>‣ Support Private & Public Channels</b>\n"
+                    "<b>‣ Batch/Bulk Mode Supported</b></blockquote>\n\n"
+                    f"<blockquote><b>🔐 Status:</b> {login_status}</blockquote>\n\n"
+                    "<blockquote><b>⚠️ Note:</b> <i>You must <code>/login</code> to your account to use the downloading features.</i></blockquote>"
+                ),
+                reply_markup=start_buttons,
+                parse_mode=enums.ParseMode.HTML
+            )
+        except FloodWait as e:
+            await asyncio.sleep(e.value)
+            await client.edit_message_text(
+                chat_id=message.chat.id,
+                message_id=message.id,
+                text=(
+                    f"<blockquote><b>👋 Welcome {callback_query.from_user.mention}!</b></blockquote>\n\n"
+                    "<b>I am the Advanced Save Restricted Content Bot by RexBots.</b>\n\n"
+                    "<blockquote><b>🚀 What I Can Do:</b>\n"
+                    "<b>‣ Save Restricted Post (Text, Media, Files)</b>\n"
+                    "<b>‣ Support Private & Public Channels</b>\n"
+                    "<b>‣ Batch/Bulk Mode Supported</b></blockquote>\n\n"
+                    f"<blockquote><b>🔐 Status:</b> {login_status}</blockquote>\n\n"
+                    "<blockquote><b>⚠️ Note:</b> <i>You must <code>/login</code> to your account to use the downloading features.</i></blockquote>"
+                ),
+                reply_markup=start_buttons,
+                parse_mode=enums.ParseMode.HTML
+            )
         await callback_query.answer()
 
     # Settings button (Command List)
@@ -1304,14 +1345,25 @@ async def button_callbacks(client: Client, callback_query):
                 InlineKeyboardButton("🔙 Back", callback_data="start_btn")
             ]
         ])
-        await client.edit_message_text(
-            chat_id=message.chat.id,
-            message_id=message.id,
-            text=COMMANDS_TXT,
-            reply_markup=settings_buttons,
-            parse_mode=enums.ParseMode.HTML,
-            disable_web_page_preview=True
-        )
+        try:
+            await client.edit_message_text(
+                chat_id=message.chat.id,
+                message_id=message.id,
+                text=COMMANDS_TXT,
+                reply_markup=settings_buttons,
+                parse_mode=enums.ParseMode.HTML,
+                disable_web_page_preview=True
+            )
+        except FloodWait as e:
+            await asyncio.sleep(e.value)
+            await client.edit_message_text(
+                chat_id=message.chat.id,
+                message_id=message.id,
+                text=COMMANDS_TXT,
+                reply_markup=settings_buttons,
+                parse_mode=enums.ParseMode.HTML,
+                disable_web_page_preview=True
+            )
         await callback_query.answer()
 
     # Close button
