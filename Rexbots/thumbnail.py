@@ -4,7 +4,6 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from database.db import db
 from config import ERROR_MESSAGE
 import os
 
@@ -18,10 +17,7 @@ async def set_thumb(client: Client, message: Message):
     
     await client.download_media(message=message.reply_to_message.photo, file_name=thumb_path)
     
-    # In a real scenario with MongoDB, we might store file_id or binary content. 
-    # For now, let's assume valid file_id storage or local usage strategy if persistent storage isn't setup for files.
-    # To keep it simple and stateless across restarts (if ephemeral), we usually store file_id.
-    
+    # Store file_id for thumbnail
     file_id = message.reply_to_message.photo.file_id
     await db.set_thumbnail(message.from_user.id, file_id)
     

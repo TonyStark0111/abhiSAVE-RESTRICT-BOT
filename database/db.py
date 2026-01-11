@@ -3,153 +3,217 @@
 # Telegram Channel @RexBots_Official
 
 
-
-import motor.motor_asyncio
-from config import DB_NAME, DB_URI
+import json
+import os
 from logger import LOGGER
 
 logger = LOGGER(__name__)
 
+DB_FILE = "database.json"
+
 class Database:
     
-    def __init__(self, uri, database_name):
-        self._client = motor.motor_asyncio.AsyncIOMotorClient(uri)
-        self.db = self._client[database_name]
-        self.col = self.db.users
-
+    def _load_db(self):
+        if os.path.exists(DB_FILE):
+            with open(DB_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        return {}
+    
+    def _save_db(self, data):
+        with open(DB_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+    
+    def _get_users(self):
+        return self._load_db()
+    
     def new_user(self, id, name):
         return dict(
-            id = id,
-            name = name,
-            session = None,
+            id=id,
+            name=name,
+            session=None,
         )
     
     async def add_user(self, id, name):
-        user = self.new_user(id, name)
-        await self.col.insert_one(user)
-        logger.info(f"New user added to DB: {id} - {name}")
+        db = self._load_db()
+        if str(id) not in db:
+            user = self.new_user(id, name)
+            db[str(id)] = user
+            self._save_db(db)
+            logger.info(f"New user added to DB: {id} - {name}")
     
     async def is_user_exist(self, id):
-        user = await self.col.find_one({'id':int(id)})
-        return bool(user)
+        db = self._load_db()
+        return str(id) in db
     
-    async def total_users_count(self):
-        count = await self.col.count_documents({})
-        return count
-
-    async def get_all_users(self):
-        return self.col.find({})
-
-    async def delete_user(self, user_id):
-        await self.col.delete_many({'id': int(user_id)})
-        logger.info(f"User deleted from DB: {user_id}")
-
+    def total_users_count(self):
+        db = self._load_db()
+        return len(db)
+    
+    def get_all_users(self):
+        db = self._load_db()
+        for user in db.values():
+            yield user
+    
+    def delete_user(self, user_id):
+        db = self._load_db()
+        if str(user_id) in db:
+            del db[str(user_id)]
+            self._save_db(db)
+            logger.info(f"User deleted from DB: {user_id}")
+    
     async def set_session(self, id, session):
-        await self.col.update_one({'id': int(id)}, {'$set': {'session': session}})
-
+        db = self._load_db()
+        if str(id) in db:
+            db[str(id)]["session"] = session
+            self._save_db(db)
+    
     async def get_session(self, id):
-        user = await self.col.find_one({'id': int(id)})
-        return user.get('session')
-
+        db = self._load_db()
+        user = db.get(str(id))
+        return user.get("session") if user else None
+    
     # Caption Support
-    async def set_caption(self, id, caption):
-        await self.col.update_one({'id': int(id)}, {'$set': {'caption': caption}})
-
-    async def get_caption(self, id):
-        user = await self.col.find_one({'id': int(id)})
-        return user.get('caption', None)
-
-    async def del_caption(self, id):
-        await self.col.update_one({'id': int(id)}, {'$unset': {'caption': ""}})
-
+    def set_caption(self, id, caption):
+        db = self._load_db()
+        if str(id) in db:
+            db[str(id)]["caption"] = caption
+            self._save_db(db)
+    
+    def get_caption(self, id):
+        db = self._load_db()
+        user = db.get(str(id))
+        return user.get("caption", None) if user else None
+    
+    def del_caption(self, id):
+        db = self._load_db()
+        if str(id) in db:
+            db[str(id)].pop("caption", None)
+            self._save_db(db)
+    
     # Thumbnail Support
-    async def set_thumbnail(self, id, thumbnail):
-        await self.col.update_one({'id': int(id)}, {'$set': {'thumbnail': thumbnail}})
-
-    async def get_thumbnail(self, id):
-        user = await self.col.find_one({'id': int(id)})
-        return user.get('thumbnail', None)
-
-    async def del_thumbnail(self, id):
-        await self.col.update_one({'id': int(id)}, {'$unset': {'thumbnail': ""}})
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official
-
+    def set_thumbnail(self, id, thumbnail):
+        db = self._load_db()
+        if str(id) in db:
+            db[str(id)]["thumbnail"] = thumbnail
+            self._save_db(db)
+    
+    def get_thumbnail(self, id):
+        db = self._load_db()
+        user = db.get(str(id))
+        return user.get("thumbnail", None) if user else None
+    
+    def del_thumbnail(self, id):
+        db = self._load_db()
+        if str(id) in db:
+            db[str(id)].pop("thumbnail", None)
+            self._save_db(db)
+    
     # Premium Support
     async def add_premium(self, id, expiry_date):
-        await self.col.update_one({'id': int(id)}, {'$set': {'is_premium': True, 'premium_expiry': expiry_date}})
-        logger.info(f"User {id} granted premium until {expiry_date}")
-
+        db = self._load_db()
+        if str(id) in db:
+            db[str(id)]["is_premium"] = True
+            db[str(id)]["premium_expiry"] = expiry_date
+            self._save_db(db)
+            logger.info(f"User {id} granted premium until {expiry_date}")
+    
     async def remove_premium(self, id):
-        await self.col.update_one({'id': int(id)}, {'$set': {'is_premium': False, 'premium_expiry': None}})
-        logger.info(f"User {id} removed from premium")
-
+        db = self._load_db()
+        if str(id) in db:
+            db[str(id)]["is_premium"] = False
+            db[str(id)]["premium_expiry"] = None
+            self._save_db(db)
+            logger.info(f"User {id} removed from premium")
+    
     async def check_premium(self, id):
-        user = await self.col.find_one({'id': int(id)})
-        if user and user.get('is_premium'):
-            return user.get('premium_expiry')
+        db = self._load_db()
+        user = db.get(str(id))
+        if user and user.get("is_premium"):
+            return user.get("premium_expiry")
         return None
-
+    
     async def get_premium_users(self):
-        return self.col.find({'is_premium': True})
-
+        db = self._load_db()
+        for user in db.values():
+            if user.get("is_premium"):
+                yield user
+    
     # Ban Support
-    async def ban_user(self, id):
-        await self.col.update_one({'id': int(id)}, {'$set': {'is_banned': True}})
-        logger.warning(f"User banned: {id}")
-
-    async def unban_user(self, id):
-        await self.col.update_one({'id': int(id)}, {'$set': {'is_banned': False}})
-        logger.info(f"User unbanned: {id}")
-
-    async def is_banned(self, id):
-        user = await self.col.find_one({'id': int(id)})
-        return user.get('is_banned', False)
-
+    def ban_user(self, id):
+        db = self._load_db()
+        if str(id) in db:
+            db[str(id)]["is_banned"] = True
+            self._save_db(db)
+            logger.warning(f"User banned: {id}")
+    
+    def unban_user(self, id):
+        db = self._load_db()
+        if str(id) in db:
+            db[str(id)]["is_banned"] = False
+            self._save_db(db)
+            logger.info(f"User unbanned: {id}")
+    
+    def is_banned(self, id):
+        db = self._load_db()
+        user = db.get(str(id))
+        return user.get("is_banned", False) if user else False
+    
     # Dump Chat Support
-    async def set_dump_chat(self, id, chat_id):
-        await self.col.update_one({'id': int(id)}, {'$set': {'dump_chat': int(chat_id)}})
-
-    async def get_dump_chat(self, id):
-        user = await self.col.find_one({'id': int(id)})
-        return user.get('dump_chat', None)
-
+    def set_dump_chat(self, id, chat_id):
+        db = self._load_db()
+        if str(id) in db:
+            db[str(id)]["dump_chat"] = int(chat_id)
+            self._save_db(db)
+    
+    def get_dump_chat(self, id):
+        db = self._load_db()
+        user = db.get(str(id))
+        return user.get("dump_chat", None) if user else None
+    
     # Delete/Replace Words Support
-    async def set_delete_words(self, id, words):
-        # words should be a list
-        await self.col.update_one({'id': int(id)}, {'$addToSet': {'delete_words': {'$each': words}}})
+    def set_delete_words(self, id, words):
+        db = self._load_db()
+        if str(id) in db:
+            if "delete_words" not in db[str(id)]:
+                db[str(id)]["delete_words"] = []
+            db[str(id)]["delete_words"].extend(words)
+            self._save_db(db)
+    
+    def get_delete_words(self, id):
+        db = self._load_db()
+        user = db.get(str(id))
+        return user.get("delete_words", []) if user else []
+    
+    def remove_delete_words(self, id, words):
+        db = self._load_db()
+        if str(id) in db:
+            if "delete_words" in db[str(id)]:
+                db[str(id)]["delete_words"] = [w for w in db[str(id)]["delete_words"] if w not in words]
+                self._save_db(db)
+    
+    def set_replace_words(self, id, repl_dict):
+        db = self._load_db()
+        if str(id) in db:
+            if "replace_words" not in db[str(id)]:
+                db[str(id)]["replace_words"] = {}
+            db[str(id)]["replace_words"].update(repl_dict)
+            self._save_db(db)
+    
+    def get_replace_words(self, id):
+        db = self._load_db()
+        user = db.get(str(id))
+        return user.get("replace_words", {}) if user else {}
+    
+    def remove_replace_words(self, id, words):
+        db = self._load_db()
+        if str(id) in db:
+            if "replace_words" in db[str(id)]:
+                for w in words:
+                    db[str(id)]["replace_words"].pop(w, None)
+                self._save_db(db)
 
-    async def get_delete_words(self, id):
-        user = await self.col.find_one({'id': int(id)})
-        return user.get('delete_words', [])
 
-    async def remove_delete_words(self, id, words):
-        await self.col.update_one({'id': int(id)}, {'$pull': {'delete_words': {'$in': words}}})
-
-    async def set_replace_words(self, id, repl_dict):
-        # repl_dict should be a dictionary {word: replacement}
-        # We might need to store it as a list of objects or handle it carefully. 
-        # For simplicity, let's assume we store updating the whole map or adding to it.
-        # MongoDB dot notation for maps is tricky for user inputs.
-        # Let's verify existing map first.
-        user = await self.col.find_one({'id': int(id)})
-        current_repl = user.get('replace_words', {})
-        current_repl.update(repl_dict)
-        await self.col.update_one({'id': int(id)}, {'$set': {'replace_words': current_repl}})
-
-    async def get_replace_words(self, id):
-        user = await self.col.find_one({'id': int(id)})
-        return user.get('replace_words', {})
-
-    async def remove_replace_words(self, id, words):
-        user = await self.col.find_one({'id': int(id)})
-        current_repl = user.get('replace_words', {})
-        for w in words:
-            current_repl.pop(w, None)
-        await self.col.update_one({'id': int(id)}, {'$set': {'replace_words': current_repl}})
-
-db = Database(DB_URI, DB_NAME)
+db = Database()
 
 
 # Rexbots

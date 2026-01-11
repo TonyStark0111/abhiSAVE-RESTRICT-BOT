@@ -6,15 +6,13 @@
 # Don't Remove Credit 
 # Telegram Channel @RexBots_Official
 import os
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
-API_ID = int(os.environ.get("API_ID", ""))
-API_HASH = os.environ.get("API_HASH", "")
-ADMINS = [int(id) for id in os.environ.get("ADMINS", "").split(",")]
-DB_URI = os.environ.get("DB_URI", "")
-DB_NAME = os.environ.get("DB_NAME", "REXSaveRestricted")
-LOG_CHANNEL = 
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8453743922:AAGMoccAImCgweSU9rULgSaDjaKgOd2r6oI")
+API_ID = int(os.environ.get("API_ID", "26704085"))
+API_HASH = os.environ.get("API_HASH", "f150646c78f09b4f88bef191a22539c0")
+ADMINS = [int(id) for id in os.environ.get("ADMINS", "7640198485").split(",")]
 ERROR_MESSAGE = bool(os.environ.get('ERROR_MESSAGE', True))
-KEEP_ALIVE_URL = os.environ.get("KEEP_ALIVE_URL", "")
+KEEP_ALIVE_URL = os.environ.get("KEEP_ALIVE_URL", "https://radhey-save-restrict-bot.onrender.com")
+LOG_CHANNEL = os.environ.get("LOG_CHANNEL", None)
 # Rexbots
 # Don't Remove Credit
 # Telegram Channel @RexBots_Official

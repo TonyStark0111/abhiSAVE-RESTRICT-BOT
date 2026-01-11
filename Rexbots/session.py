@@ -10,7 +10,8 @@ from pyrogram.errors import (
     PhoneCodeInvalid,
     PhoneCodeExpired,
     SessionPasswordNeeded,
-    PasswordHashInvalid
+    PasswordHashInvalid,
+    FloodWait
 )
 from config import API_ID, API_HASH
 from database.db import db
@@ -50,7 +51,7 @@ async def check_login_state(_, __, message):
 
 login_state_filter = filters.create(check_login_state)
 
-@Client.on_message(filters.private & filters.text & login_state_filter)
+@Client.on_message(filters.private & filters.text & login_state_filter & ~filters.regex("^/"))
 async def login_handler(bot: Client, message: Message):
     user_id = message.from_user.id
     # No need to check "if user_id not in LOGIN_STATE" again, filter did it.
@@ -77,12 +78,25 @@ async def login_handler(bot: Client, message: Message):
                 "If OTP Is 12345, Please Send It As '12 345' (with space) or '12345'.__**\n\n"
                 "Send /cancellogin to Cancel."
             )
+            
+            # Show success message after OTP is sent
+            await message.reply("**✅ OTP Sent Successfully! Please check your Telegram app and enter the code.**")
 # Rexbots
 # Don't Remove Credit
 # Telegram Channel @RexBots_Official
             
         except PhoneNumberInvalid:
             await message.reply('**❌ __PHONE_NUMBER Is Invalid.__**')
+            await temp_client.disconnect()
+            del LOGIN_STATE[user_id]
+        except FloodWait as fw:
+            wait_time = min(fw.x, 300)  # Cap wait time at 5 minutes
+            await message.reply(f'**⏳ FloodWait detected! Please try again after {wait_time} seconds.**')
+            await temp_client.disconnect()
+            del LOGIN_STATE[user_id]
+        except FloodWait as fw:
+            wait_time = min(fw.x, 300)  # Cap wait time at 5 minutes
+            await message.reply(f'**⏳ FloodWait detected! Please try again after {wait_time} seconds.**')
             await temp_client.disconnect()
             del LOGIN_STATE[user_id]
         except Exception as e:
@@ -138,6 +152,11 @@ async def finalize_login(bot, message, temp_client, user_id):
         del LOGIN_STATE[user_id]
         
         await message.reply("<b>__Account Login Successfully ✅\n\nIf You Get Any Error Related To AUTH KEY Then /logout first and /login again.__</b>")
+    except FloodWait as fw:
+        wait_time = min(fw.x, 300)  # Cap wait time at 5 minutes
+        await message.reply(f'<b>⏳ FloodWait detected during login finalization! Please try again after {wait_time} seconds.</b>')
+        if user_id in LOGIN_STATE:
+             del LOGIN_STATE[user_id]
     except Exception as e:
         await message.reply(f"<b>❌ __ERROR IN FINALIZING LOGIN: `{e}`__</b>")
         if user_id in LOGIN_STATE:

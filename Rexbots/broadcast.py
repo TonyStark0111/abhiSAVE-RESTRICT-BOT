@@ -5,8 +5,8 @@
 
 
 from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid
-from database.db import db
 from pyrogram import Client, filters
+from database.db import db
 from config import ADMINS
 import asyncio
 import datetime
@@ -132,7 +132,7 @@ async def users_count(bot: Client, message: Message):
 
 👥 <b>Total Registered Users:</b> {total}
 🛰 <b>System Status:</b> Active ✅
-🧠 <b>Data Source:</b> MongoDB (async)
+🧠 <b>Data Source:</b> JSON File
 """
         )
 

@@ -4,8 +4,7 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from database.db import db
-from config import ADMINS, DB_URI
+from config import ADMINS
 
 @Client.on_message(filters.command("ban") & filters.user(ADMINS))
 async def ban(client: Client, message: Message):
@@ -46,7 +45,7 @@ async def set_dump(client: Client, message: Message):
 
 @Client.on_message(filters.command("dblink") & filters.user(ADMINS))
 async def dblink(client: Client, message: Message):
-    await message.reply_text(f"**DB URI:** `{DB_URI}`")
+    await message.reply_text("**DB URI:** `Not configured (JSON storage)`")
 
 @Client.on_message(filters.command(["add_unsubscribe", "del_unsubscribe"]) & filters.user(ADMINS))
 async def manage_force_subscribe(client: Client, message: Message):
