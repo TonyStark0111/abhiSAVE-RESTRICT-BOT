@@ -1006,6 +1006,10 @@ async def handle_private(client: Client, acc, message: Message, chatid: int, msg
     try:
         # Download into unique directory (folder path must end with / for Pyrogram)
         file = await acc.download_media(msg, file_name=f"{temp_dir}/", progress=progress, progress_args=[message, "down"])
+        
+        # Ensure file was downloaded successfully
+        if not file or not os.path.exists(file):
+            raise Exception("Failed to download media file")
         if os.path.exists(f'{message.id}downstatus.txt'):
             os.remove(f'{message.id}downstatus.txt')
     except Exception as e:
@@ -1065,6 +1069,10 @@ async def handle_private(client: Client, acc, message: Message, chatid: int, msg
         return False
 
     try:
+        # Ensure file exists before attempting to send
+        if not file or not os.path.exists(file):
+            raise Exception("Media file not found for upload")
+            
         if "Document" == msg_type:
             try:
                 ph_path = await acc.download_media(msg.document.thumbs[0].file_id)
