@@ -40,7 +40,7 @@ DB_NAME = os.environ.get("DB_NAME", "SaveRestricted2")
 # ==============================
 
 # Replace with your Telegram log channel ID (example: -1001234567890)
-LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", "-1003539515201"))
+LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", "-1003747465902"))
 
 
 # ==============================
