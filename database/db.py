@@ -47,14 +47,14 @@ class Database:
 
     async def get_session(self, id):
         user = await self.col.find_one({'id': int(id)})
-        return user.get('session') if user else None
+        return user.get('session')
 
     async def set_caption(self, id, caption):
         await self.col.update_one({'id': int(id)}, {'$set': {'caption': caption}})
 
     async def get_caption(self, id):
         user = await self.col.find_one({'id': int(id)})
-        return user.get('caption') if user else None
+        return user.get('caption')
 
     async def del_caption(self, id):
         await self.col.update_one({'id': int(id)}, {'$unset': {'caption': ""}})
@@ -64,7 +64,7 @@ class Database:
 
     async def get_thumbnail(self, id):
         user = await self.col.find_one({'id': int(id)})
-        return user.get('thumbnail') if user else None
+        return user.get('thumbnail')
 
     async def del_thumbnail(self, id):
         await self.col.update_one({'id': int(id)}, {'$unset': {'thumbnail': ""}})
@@ -86,9 +86,7 @@ class Database:
 
     async def check_premium(self, id):
         user = await self.col.find_one({'id': int(id)})
-        if user and user.get('is_premium'):
-            return user.get('premium_expiry')
-        return None
+        return user.get('premium_expiry') if user and user.get('is_premium') else None
 
     async def get_premium_users(self):
         return self.col.find({'is_premium': True})
@@ -101,39 +99,37 @@ class Database:
 
     async def is_banned(self, id):
         user = await self.col.find_one({'id': int(id)})
-        return user.get('is_banned', False) if user else False
+        return user.get('is_banned', False)
 
     async def set_dump_chat(self, id, chat_id):
         await self.col.update_one({'id': int(id)}, {'$set': {'dump_chat': int(chat_id)}})
 
     async def get_dump_chat(self, id):
         user = await self.col.find_one({'id': int(id)})
-        return user.get('dump_chat') if user else None
+        return user.get('dump_chat')
 
     async def set_delete_words(self, id, words):
         await self.col.update_one({'id': int(id)}, {'$addToSet': {'delete_words': {'$each': words}}})
 
     async def get_delete_words(self, id):
         user = await self.col.find_one({'id': int(id)})
-        return user.get('delete_words', []) if user else []
+        return user.get('delete_words', [])
 
     async def remove_delete_words(self, id, words):
         await self.col.update_one({'id': int(id)}, {'$pull': {'delete_words': {'$in': words}}})
 
     async def set_replace_words(self, id, repl_dict):
         user = await self.col.find_one({'id': int(id)})
-        current = user.get('replace_words', {}) if user else {}
+        current = user.get('replace_words', {})
         current.update(repl_dict)
         await self.col.update_one({'id': int(id)}, {'$set': {'replace_words': current}})
 
     async def get_replace_words(self, id):
         user = await self.col.find_one({'id': int(id)})
-        return user.get('replace_words', {}) if user else {}
+        return user.get('replace_words', {})
 
     async def remove_replace_words(self, id, words):
         user = await self.col.find_one({'id': int(id)})
-        if not user:
-            return
         current = user.get('replace_words', {})
         for w in words:
             current.pop(w, None)
@@ -153,7 +149,7 @@ class Database:
 
     async def add_traffic(self, id):
         user = await self.col.find_one({'id': int(id)})
-        if not user or user.get('is_premium'):
+        if user.get('is_premium'):
             return
         now = datetime.datetime.now()
         reset = user.get('limit_reset_time')
@@ -177,7 +173,7 @@ class Database:
 
     async def add_private_traffic(self, id):
         user = await self.col.find_one({'id': int(id)})
-        if not user or user.get('is_premium'):
+        if user.get('is_premium'):
             return
         now = datetime.datetime.now()
         reset = user.get('private_limit_reset_time')
