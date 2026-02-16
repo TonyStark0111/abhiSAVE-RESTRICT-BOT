@@ -14,7 +14,7 @@ API_HASH = os.environ.get("API_HASH", "013a5c0b1f2c320b98236cf212835d59")
 
 ADMINS = [int(admin) for admin in os.environ.get("ADMINS", "6048003536").split(",") if admin]
 
-DB_URI = os.environ.get("DB_URI", "")
+DB_URI = os.environ.get("DB_URI", "mongodb+srv://SAVERESTRICTED:SAVERESTRICTED@cluster0.iqhud5q.mongodb.net/?appName=Cluster0")
 DB_NAME = os.environ.get("DB_NAME", "SaveRestricted2")
 
 PUBLIC_COOLDOWN = int(os.environ.get("PUBLIC_COOLDOWN", 10))
